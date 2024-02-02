@@ -1,11 +1,21 @@
 package iwd.props.com.greeterapp
 
+import android.os.AsyncTask
 import android.os.Bundle
-import android.os.Environment
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import org.web3j.crypto.WalletFile
+import org.web3j.crypto.WalletUtils
+import org.web3j.protocol.Web3j
+import org.web3j.protocol.core.RemoteCall
+import org.web3j.protocol.core.methods.response.TransactionReceipt
+import org.web3j.protocol.http.HttpService
 import java.io.File
+import java.math.BigInteger
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Paths
 
 
 class MainActivity : AppCompatActivity() {
@@ -52,18 +62,27 @@ class MainActivity : AppCompatActivity() {
             //  println("MA " + filePathInInternalStorage.absolutePath)
 //            val filePath = internalStorageDir.absolutePath + "/walletFileJson.json"
             val externalStorageDir = internalStorageDir
-
+            val assetManager = Utility.getUriFromPath(this, "")
             // Construct the file path within external storage
-            val filePathInExternalStorage =
-                File(externalStorageDir, "walletFileJson.json")
-            println("MA " + filePathInExternalStorage.path)
-            if (filePathInExternalStorage.exists()) {
-                println("exists " + filePathInExternalStorage.path)
-                val cccc = ContractInteractionTask().apply {
-                    setPath(filePathInExternalStorage.absolutePath)
+            println("filePathInSt " + assetManager.path)
+            val filePathInSt = File(assetManager.path.toString())
+            if (filePathInSt.exists()) {
+                val filePathI = File(assetManager.path.toString(), "walletFileJson.json")
+                if (filePathI.exists()) {
+                    println("exists " + filePathI.path)
+
+                    val cccc = ContractInteractionTask().apply {
+                        setPath(filePathI.path)
+                    }
+                    cccc.execute()
                 }
-                cccc.execute()
             }
+//                println("exists " + filePathInExternalStorage.path)
+//                val cccc = ContractInteractionTask().apply {
+//                    setPath(filePathInExternalStorage.absolutePath)
+//                }
+//                cccc.execute()
+//            }
 
 
 //            val mWeb3j = Web3j.build(HttpService("HTTP://127.0.0.1:7545"))
@@ -100,6 +119,54 @@ class MainActivity : AppCompatActivity() {
 //                }
 //            }
 //            thread.start()
+        }
+    }
+}
+
+class ContractInteractionTask :
+    AsyncTask<Void?, Void?, TransactionReceipt?>() {
+    private val contractAddress = "0x322d4bCaDc587f97B0B735932460486cc25C449a"
+    private var walletFilePath = ""
+
+    //  private final String walletFile = "file:///android_asset/walletFileJson.txt";
+    private val walletPassword = "123456Rasel$$"
+    private val yourPrivateKey = "your_private_key" // Keep this secure!
+    private val web3j =
+        Web3j.build(HttpService("https://sepolia.infura.io/v3/804d4c62a1034819ac69efbea6732426"))
+
+    fun setPath(ppp: String) {
+        walletFilePath = ppp
+        println("file $walletFilePath")
+    }
+
+    override fun doInBackground(vararg voids: Void?): TransactionReceipt? {
+        return try {
+            println("file try$walletFilePath")
+
+            val credentials = WalletUtils.loadCredentials(walletPassword, walletFilePath)
+//            val yourContract = Greeter.load(
+//                contractAddress,
+//                web3j,
+//                credentials,
+//                BigInteger.valueOf(5000000),
+//                BigInteger.valueOf(5000000)
+//            )
+//            val remoteCall: RemoteCall<TransactionReceipt> = yourContract.kill()
+//            remoteCall.send()
+            return null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    override fun onPostExecute(transactionReceipt: TransactionReceipt?) {
+        if (transactionReceipt != null) {
+            // Transaction successful, handle the receipt
+            println("Transaction Hash: " + transactionReceipt.transactionHash)
+        } else {
+            // Transaction failed or encountered an exception
+            println("Transaction failed")
         }
     }
 }
